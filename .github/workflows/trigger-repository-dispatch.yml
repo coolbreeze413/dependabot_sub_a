@@ -1,0 +1,35 @@
+name: trigger-repository-dispatch
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+
+  trigger-repository-dispatch-job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2 # we need current and previous commits
+
+      - name: dump gh context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: trigger repo dispatch
+        run:  |
+              curl \
+                -X POST \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: Bearer ${{ secrets.GHARIAL_PAT_SECRET }}" \
+                https://api.github.com/repos/coolbreeze413/gharial/dispatches \
+                -d '{"event_type":"coolbreeze413-test-trigger-a", "client_payload": {"foo": "bar"}'}
+              CURL_STATUS=$?
+              echo "CURL_STATUS=$CURL_STATUS"
